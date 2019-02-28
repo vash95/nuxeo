@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.nuxeo.ecm.core.api.Blob;
 import org.nuxeo.ecm.core.api.blobholder.BlobHolder;
 import org.nuxeo.ecm.core.convert.api.ConversionException;
 import org.nuxeo.ecm.core.convert.api.ConversionService;
@@ -74,10 +75,35 @@ public class ChainedConverter implements Converter {
         }
     }
 
+    @Override
+    public Blob convert(Blob blob, Map<String, Serializable> parameters) throws ConversionException {
+        if (subConvertersBased) {
+            return convertBasedSubConverters(blob, parameters);
+        } else {
+            return convertBasedOnMimeTypes(blob, parameters);
+        }
+    }
+
     protected BlobHolder convertBasedSubConverters(BlobHolder blobHolder, Map<String, Serializable> parameters)
             throws ConversionException {
         String srcMT = blobHolder.getBlob().getMimeType();
         BlobHolder result = blobHolder;
+        for (String converterName : subConverters) {
+            ConverterDescriptor desc = ConversionServiceImpl.getConverterDescriptor(converterName);
+            if (!desc.getSourceMimeTypes().contains(srcMT)) {
+                throw new ConversionException("Conversion Chain is not well defined");
+            }
+            Converter converter = ConversionServiceImpl.getConverter(converterName);
+            result = converter.convert(result, parameters);
+            srcMT = desc.getDestinationMimeType();
+        }
+        return result;
+    }
+
+    protected Blob convertBasedSubConverters(Blob blob, Map<String, Serializable> parameters)
+            throws ConversionException {
+        String srcMT = blob.getMimeType();
+        Blob result = blob;
         for (String converterName : subConverters) {
             ConverterDescriptor desc = ConversionServiceImpl.getConverterDescriptor(converterName);
             if (!desc.getSourceMimeTypes().contains(srcMT)) {
@@ -97,6 +123,26 @@ public class ChainedConverter implements Converter {
             throws ConversionException {
         String srcMT = blobHolder.getBlob().getMimeType();
         BlobHolder result = blobHolder;
+        for (String dstMT : steps) {
+            String converterName = Framework.getService(ConversionService.class).getConverterName(srcMT, dstMT);
+            if (converterName == null) {
+                throw new ConversionException(
+                        "Chained conversion error : unable to find converter between " + srcMT + " and " + dstMT);
+            }
+            Converter converter = ConversionServiceImpl.getConverter(converterName);
+            result = converter.convert(result, parameters);
+            srcMT = dstMT;
+        }
+        return result;
+    }
+
+    /**
+     * Tries to find a chain of converters that fits the mime-types chain.
+     */
+    protected Blob convertBasedOnMimeTypes(Blob blob, Map<String, Serializable> parameters)
+            throws ConversionException {
+        String srcMT = blob.getMimeType();
+        Blob result = blob;
         for (String dstMT : steps) {
             String converterName = Framework.getService(ConversionService.class).getConverterName(srcMT, dstMT);
             if (converterName == null) {

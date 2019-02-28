@@ -52,6 +52,18 @@ public interface ConversionService {
             throws ConversionException;
 
     /**
+     * Converts a Blob given a converter name, and returns a single resulting blob.
+     *
+     * @param converterName the converter name
+     * @param blob the blob to convert
+     * @param parameters the conversion parameters
+     * @return the converted blob
+     * @throws ConversionException if the conversion returns several blobs
+     * @since 11.1
+     */
+    Blob convert(String converterName, Blob blob, Map<String, Serializable> parameters) throws ConversionException;
+
+    /**
      * Converts a Blob given a target destination MimeType.
      */
     BlobHolder convertToMimeType(String destinationMimeType, BlobHolder blobHolder,

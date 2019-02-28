@@ -37,17 +37,12 @@ import org.nuxeo.runtime.api.Framework;
 
 public class HtmlPreviewConverter implements ExternalConverter {
 
-    protected static ConversionService cs;
-
     protected static Boolean canUsePDF2Html;
 
     protected static Boolean canUseOOo2Html;
 
     protected static ConversionService getConversionService() {
-        if (cs == null) {
-            cs = Framework.getService(ConversionService.class);
-        }
-        return cs;
+        return Framework.getService(ConversionService.class);
     }
 
     protected static boolean getCanUsePDF2Html() {
@@ -120,6 +115,22 @@ public class HtmlPreviewConverter implements ExternalConverter {
         Blob blob = result.getBlob();
         if (blob != null && blob.getEncoding() == null) {
             blob.setEncoding("UTF-8");
+        }
+        return result;
+    }
+
+    @Override
+    public Blob convert(Blob sourceBlob, Map<String, Serializable> parameters) throws ConversionException {
+        List<String> subConverters = getConverterChain(sourceBlob.getMimeType());
+        if (subConverters == null) {
+            throw new ConversionException("Can not find suitable underlying converters to handle html preview");
+        }
+        Blob result = sourceBlob;
+        for (String converterName : subConverters) {
+            result = getConversionService().convert(converterName, result, parameters);
+        }
+        if (result != null && result.getEncoding() == null) {
+            result.setEncoding("UTF-8");
         }
         return result;
     }

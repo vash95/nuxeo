@@ -214,9 +214,12 @@ public class RFC822ToTextConverter implements Converter {
 
     @Override
     public BlobHolder convert(BlobHolder blobHolder, Map<String, Serializable> parameters) throws ConversionException {
-        Blob inputBlob = blobHolder.getBlob();
-        Blob outputBlob = extractTextFromMessage(inputBlob);
-        return new SimpleCachableBlobHolder(outputBlob);
+        return new SimpleCachableBlobHolder(convert(blobHolder.getBlob(), parameters));
+    }
+
+    @Override
+    public Blob convert(Blob blob, Map<String, Serializable> parameters) throws ConversionException {
+        return extractTextFromMessage(blob);
     }
 
     @Override

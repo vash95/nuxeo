@@ -50,11 +50,14 @@ public class IWork2PDFConverter implements Converter {
 
     @Override
     public BlobHolder convert(BlobHolder blobHolder, Map<String, Serializable> parameters) throws ConversionException {
-        try {
-            // retrieve the blob and verify its mimeType
-            Blob blob = blobHolder.getBlob();
-            String mimeType = blob.getMimeType();
+        Blob blob = convert(blobHolder.getBlob(), parameters);
+        return new SimpleCachableBlobHolder(blob);
+    }
 
+    @Override
+    public Blob convert(Blob blob, Map<String, Serializable> parameters) throws ConversionException {
+        try {
+            String mimeType = blob.getMimeType();
             if (mimeType == null || !IWORK_MIME_TYPES.contains(mimeType)) {
                 throw new ConversionException("not an iWork file");
             }
@@ -75,7 +78,7 @@ public class IWork2PDFConverter implements Converter {
                     try (InputStream previewPDFFile = ZipUtils.getEntryContentAsStream(blob.getStream(), IWORK_PREVIEW_FILE)) {
                         previewBlob = Blobs.createBlob(previewPDFFile);
                     }
-                    return new SimpleCachableBlobHolder(previewBlob);
+                    return previewBlob;
                 } else {
                     // Pdf file does not exist, conversion cannot be done.
                     throw new ConversionException("iWork file does not contain a pdf preview.");

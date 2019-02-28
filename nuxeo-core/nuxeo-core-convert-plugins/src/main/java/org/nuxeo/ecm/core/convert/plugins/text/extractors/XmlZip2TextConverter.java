@@ -29,6 +29,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import org.nuxeo.ecm.core.api.Blob;
 import org.nuxeo.ecm.core.api.Blobs;
 import org.nuxeo.ecm.core.api.blobholder.BlobHolder;
 import org.nuxeo.ecm.core.convert.api.ConversionException;
@@ -43,11 +44,15 @@ import org.xml.sax.XMLReader;
  */
 public abstract class XmlZip2TextConverter implements Converter {
 
+    @Override
     public BlobHolder convert(BlobHolder blobHolder, Map<String, Serializable> parameters) throws ConversionException {
+        return new SimpleCachableBlobHolder(convert(blobHolder.getBlob(), parameters));
+    }
 
+    @Override
+    public Blob convert(Blob blob, Map<String, Serializable> parameters) throws ConversionException {
         SAXParserFactory parserFactory = SAXParserFactory.newInstance();
         parserFactory.setValidating(false);
-
         try {
             SAXParser parser = parserFactory.newSAXParser();
             XMLReader reader = parser.getXMLReader();
@@ -56,7 +61,7 @@ public abstract class XmlZip2TextConverter implements Converter {
             reader.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
 
             StringBuilder sb = new StringBuilder();
-            UnclosableZipInputStream zis = new UnclosableZipInputStream(blobHolder.getBlob().getStream());
+            UnclosableZipInputStream zis = new UnclosableZipInputStream(blob.getStream());
             // ZipInputStream zis = new ZipInputStream(
             // blobHolder.getBlob().getStream());
             try {
@@ -64,7 +69,7 @@ public abstract class XmlZip2TextConverter implements Converter {
             } finally {
                 zis.doClose();
             }
-            return new SimpleCachableBlobHolder(Blobs.createBlob(sb.toString()));
+            return Blobs.createBlob(sb.toString());
         } catch (IOException | ParserConfigurationException | SAXException e) {
             throw new ConversionException("Error during OpenXml2Text conversion", e);
         }

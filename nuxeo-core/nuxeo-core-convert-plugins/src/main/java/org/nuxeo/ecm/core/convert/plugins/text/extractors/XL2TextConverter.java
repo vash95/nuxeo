@@ -33,6 +33,7 @@ import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 import org.apache.poi.ss.usermodel.Row;
+import org.nuxeo.ecm.core.api.Blob;
 import org.nuxeo.ecm.core.api.Blobs;
 import org.nuxeo.ecm.core.api.blobholder.BlobHolder;
 import org.nuxeo.ecm.core.convert.api.ConversionException;
@@ -50,11 +51,15 @@ public class XL2TextConverter implements Converter {
 
     @Override
     public BlobHolder convert(BlobHolder blobHolder, Map<String, Serializable> parameters) throws ConversionException {
+        return new SimpleCachableBlobHolder(convert(blobHolder.getBlob(), parameters));
+    }
 
+    @Override
+    public Blob convert(Blob blob, Map<String, Serializable> parameters) throws ConversionException {
         InputStream stream = null;
         StringBuilder sb = new StringBuilder();
         try {
-            stream = blobHolder.getBlob().getStream();
+            stream = blob.getStream();
             POIFSFileSystem fs = new POIFSFileSystem(stream);
             HSSFWorkbook workbook = new HSSFWorkbook(fs);
             for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
@@ -71,7 +76,7 @@ public class XL2TextConverter implements Converter {
                     sb.append(ROW_SEP);
                 }
             }
-            return new SimpleCachableBlobHolder(Blobs.createBlob(sb.toString()));
+            return Blobs.createBlob(sb.toString());
         } catch (IOException e) {
             throw new ConversionException("Error during XL2Text conversion", e);
         } finally {

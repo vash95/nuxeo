@@ -36,13 +36,18 @@ import org.nuxeo.ecm.core.convert.extension.ConverterDescriptor;
  */
 public class Zip2HtmlConverter implements Converter {
 
+    @Override
     public BlobHolder convert(BlobHolder blobHolder, Map<String, Serializable> parameters) throws ConversionException {
-        Blob blob = blobHolder.getBlob();
+        return new ZipCachableBlobHolder(convert(blobHolder.getBlob(), parameters));
+    }
+
+    @Override
+    public Blob convert(Blob blob, Map<String, Serializable> parameters) throws ConversionException {
         String mimeType = blob.getMimeType();
         if (!mimeType.equals("application/zip") && !mimeType.equals("application/x-zip-compressed")) {
             throw new ConversionException("not a zip file");
         }
-        return new ZipCachableBlobHolder(blob);
+        return blob;
     }
 
     public void init(ConverterDescriptor descriptor) {

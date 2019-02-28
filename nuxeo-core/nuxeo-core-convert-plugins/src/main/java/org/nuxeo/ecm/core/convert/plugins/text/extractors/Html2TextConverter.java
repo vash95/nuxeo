@@ -52,10 +52,14 @@ public class Html2TextConverter implements Converter {
 
     @Override
     public BlobHolder convert(BlobHolder blobHolder, Map<String, Serializable> parameters) throws ConversionException {
+        return new SimpleCachableBlobHolder(convert(blobHolder.getBlob(), parameters));
+    }
+
+    @Override
+    public Blob convert(Blob blob, Map<String, Serializable> parameters) throws ConversionException {
 
         InputStream stream = null;
         try {
-            Blob blob = blobHolder.getBlob();
             // if the underlying source is unambiguously decoded, access the
             // decoded string directly
             Source source;
@@ -76,7 +80,7 @@ public class Html2TextConverter implements Converter {
             text = text.replaceAll(" *\n", "\n"); // clean trailing spaces
             text = text.replaceAll("\\n\\n+", "\n\n"); // clean multiple lines
             text = text.trim();
-            return new SimpleCachableBlobHolder(Blobs.createBlob(text));
+            return Blobs.createBlob(text);
         } catch (IOException e) {
             throw new ConversionException("Error during Html2Text conversion", e);
         } finally {
