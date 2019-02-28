@@ -76,6 +76,29 @@ public class GoogleDriveBlobConverter implements Converter {
         return new SimpleCachableBlobHolder(dstBlob);
     }
 
+    @Override
+    public Blob convert(Blob srcBlob, Map<String, Serializable> parameters) throws ConversionException {
+        if (srcBlob == null) {
+            return null;
+        }
+        Blob dstBlob;
+        try {
+            DocumentModel doc = null;
+            if (blobHolder instanceof DocumentBlobHolder) {
+                doc = ((DocumentBlobHolder) blobHolder).getDocument();
+            }
+            dstBlob = convert(srcBlob, doc);
+        } catch (IOException e) {
+            throw new ConversionException("Unable to fetch conversion", e);
+        }
+
+        if (dstBlob == null) {
+            return null;
+        }
+
+        return dstBlob;
+    }
+
     protected Blob convert(Blob blob, DocumentModel doc) throws IOException {
         String mimetype = descriptor.getDestinationMimeType();
         InputStream is = Framework.getService(DocumentBlobManager.class).getConvertedStream(blob, mimetype, doc);
