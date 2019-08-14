@@ -27,7 +27,6 @@ import static org.nuxeo.ecm.platform.comment.api.CommentConstants.MIGRATION_STEP
 import static org.nuxeo.ecm.platform.comment.workflow.utils.CommentsConstants.COMMENT_PARENT_ID;
 import static org.nuxeo.ecm.platform.ec.notification.NotificationConstants.DISABLE_NOTIFICATION_SERVICE;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -61,11 +60,11 @@ public class CommentsMigrator extends AbstractRepositoryMigrator {
 
     @Override
     protected String probeSession(CoreSession session) {
-        CommentService commentComponent =  Framework.getService(CommentService.class);
+        CommentService commentComponent = Framework.getService(CommentService.class);
         CommentServiceConfig commentServiceConfig = commentComponent.getConfig();
         if (commentServiceConfig != null) {
             Graph graph = Framework.getService(RelationManager.class).getGraph(commentServiceConfig.graphName, session);
-            if (graph.getStatements().size() > 0) {
+            if (!graph.getStatements().isEmpty()) {
                 return MIGRATION_STATE_RELATION;
             }
         }
@@ -109,14 +108,13 @@ public class CommentsMigrator extends AbstractRepositoryMigrator {
         try {
             repositoryNames.forEach(this::migrateRepository);
         } catch (MigrationShutdownException e) {
-            return;
+            log.debug("Migration shutdown on step: {}.", step);
         }
     }
 
-    @SuppressWarnings("unchecked")
     protected void migrateComments(CoreSession session, RelationManager relationManager, CommentServiceConfig config,
             Statement statement) {
-        Map<String, Object> ctxMap = Collections.singletonMap(ResourceAdapter.CORE_SESSION_CONTEXT_KEY, session);
+        Map<String, Object> ctxMap = Map.of(ResourceAdapter.CORE_SESSION_CONTEXT_KEY, session);
         QNameResourceImpl object = (QNameResourceImpl) statement.getObject();
         DocumentModel parent = (DocumentModel) relationManager.getResourceRepresentation(config.documentNamespace,
                 object, ctxMap);
