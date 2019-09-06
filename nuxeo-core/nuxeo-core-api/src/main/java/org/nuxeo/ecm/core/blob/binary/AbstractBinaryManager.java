@@ -30,6 +30,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.codec.binary.Hex;
 import org.nuxeo.common.xmap.XMap;
 import org.nuxeo.ecm.core.api.Blob;
 
@@ -66,6 +67,8 @@ public abstract class AbstractBinaryManager implements BinaryManager {
     protected BinaryManagerRootDescriptor descriptor;
 
     protected BinaryGarbageCollector garbageCollector;
+
+    private MessageDigest messageDigest;
 
     @Override
     public void initialize(String blobProviderId, Map<String, String> properties) throws IOException {
@@ -132,12 +135,7 @@ public abstract class AbstractBinaryManager implements BinaryManager {
     public static final int MAX_BUF_SIZE = 64 * 1024; // 64 kB
 
     protected String storeAndDigest(InputStream in, OutputStream out) throws IOException {
-        MessageDigest digest;
-        try {
-            digest = MessageDigest.getInstance(getDigestAlgorithm());
-        } catch (NoSuchAlgorithmException e) {
-            throw (IOException) new IOException().initCause(e);
-        }
+        MessageDigest digest = getMessageDigest();
 
         int size = in.available();
         if (size == 0) {
@@ -159,18 +157,23 @@ public abstract class AbstractBinaryManager implements BinaryManager {
         }
         out.flush();
 
-        return toHexString(digest.digest());
+        return Hex.encodeHexString(digest.digest());
     }
 
-    private static final char[] HEX_DIGITS = "0123456789abcdef".toCharArray();
-
-    public static String toHexString(byte[] data) {
-        StringBuilder sb = new StringBuilder(2 * data.length);
-        for (byte b : data) {
-            sb.append(HEX_DIGITS[(0xF0 & b) >> 4]);
-            sb.append(HEX_DIGITS[0x0F & b]);
+    protected MessageDigest getMessageDigest() throws IOException {
+        if (messageDigest == null) {
+            try {
+                messageDigest = MessageDigest.getInstance(getDigestAlgorithm());
+            } catch (NoSuchAlgorithmException e) {
+                throw (IOException) new IOException().initCause(e);
+            }
         }
-        return sb.toString();
+        return messageDigest;
+    }
+
+    @Deprecated
+    public static String toHexString(byte[] data) {
+        return Hex.encodeHexString(data);
     }
 
     @Override

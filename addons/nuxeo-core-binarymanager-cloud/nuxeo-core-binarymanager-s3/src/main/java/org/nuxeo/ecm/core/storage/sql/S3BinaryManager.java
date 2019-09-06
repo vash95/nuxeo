@@ -43,6 +43,7 @@ import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -56,6 +57,7 @@ import org.nuxeo.ecm.core.blob.BlobManager;
 import org.nuxeo.ecm.core.blob.BlobProvider;
 import org.nuxeo.ecm.core.blob.ManagedBlob;
 import org.nuxeo.ecm.core.blob.binary.BinaryGarbageCollector;
+import org.nuxeo.ecm.core.blob.binary.BinaryManager;
 import org.nuxeo.ecm.core.blob.binary.FileStorage;
 import org.nuxeo.runtime.api.Framework;
 import org.nuxeo.runtime.aws.NuxeoAWSRegionProvider;
@@ -99,11 +101,13 @@ import com.amazonaws.services.s3.transfer.Upload;
  */
 public class S3BinaryManager extends AbstractCloudBinaryManager {
 
-    private static final String MD5 = "MD5"; // must be MD5 for Etag
-
     @Override
     protected String getDefaultDigestAlgorithm() {
-        return MD5;
+        return getProperty(DIGEST_ALGORITHM_PROPERTY, MD5_DIGEST).toUpperCase();
+    }
+
+    protected String getDigestRegex() {
+        return getProperty(DIGEST_REGEX_PROPERTY);
     }
 
     private static final Log log = LogFactory.getLog(S3BinaryManager.class);
@@ -119,6 +123,10 @@ public class S3BinaryManager extends AbstractCloudBinaryManager {
     public static final String AWS_ID_PROPERTY = "awsid";
 
     public static final String AWS_SECRET_PROPERTY = "awssecret";
+
+    public static final String DIGEST_ALGORITHM_PROPERTY = "digest_algo";
+
+    public static final String DIGEST_REGEX_PROPERTY = "digest_regex";
 
     /**
      * @since 10.10
@@ -163,6 +171,10 @@ public class S3BinaryManager extends AbstractCloudBinaryManager {
     public static final String DELIMITER = "/";
 
     private static final Pattern MD5_RE = Pattern.compile("[0-9a-f]{32}");
+
+    private static final Pattern SHA1_RE = Pattern.compile("[0-9a-f]{40}");
+
+    private static final Pattern SHA256_RE = Pattern.compile("[0-9a-f]{64}");
 
     protected String bucketName;
 
@@ -418,8 +430,29 @@ public class S3BinaryManager extends AbstractCloudBinaryManager {
         return false;
     }
 
+    @Deprecated
     public static boolean isMD5(String digest) {
-        return MD5_RE.matcher(digest).matches();
+        return isValidHash(digest, MD5_DIGEST, null);
+    }
+
+    public static boolean isValidHash(String digest, String digestAlgorithm, S3BinaryManager bm) {
+        String digestAlgo = StringUtils.isEmpty(digestAlgorithm) ? bm.getDigestAlgorithm() : digestAlgorithm;
+        switch (digestAlgo) {
+        case MD5_DIGEST:
+            return MD5_RE.matcher(digest).matches();
+        case SHA1_DIGEST:
+            return SHA1_RE.matcher(digest).matches();
+        case SHA256_DIGEST:
+            return SHA256_RE.matcher(digest).matches();
+        default:
+            String digestRegex = bm.getDigestRegex();
+            if (StringUtils.isAllEmpty(digestRegex)) {
+                throw new NuxeoException(String.format(
+                        "A regex must be configured to validated %s digest. Configure the property %s.%s in your nuxeo.conf",
+                        digestAlgo, SYSTEM_PROPERTY_PREFIX, DIGEST_REGEX_PROPERTY));
+            }
+            return digest.matches(digestRegex);
+        }
     }
 
     /**
@@ -631,7 +664,7 @@ public class S3BinaryManager extends AbstractCloudBinaryManager {
                     // In case of multipart it will happen, verify the downloaded file
                     String currentDigest;
                     try (FileInputStream input = new FileInputStream(file)) {
-                        currentDigest = DigestUtils.md5Hex(input);
+                        currentDigest = Hex.encodeHexString(DigestUtils.digest(getMessageDigest(), input));
                     }
                     if (!currentDigest.equals(digest)) {
                         log.error("Invalid ETag in S3, currentDigest=" + currentDigest + " expectedDigest=" + digest);
@@ -690,7 +723,7 @@ public class S3BinaryManager extends AbstractCloudBinaryManager {
                 int prefixLength = binaryManager.bucketNamePrefix.length();
                 for (S3ObjectSummary summary : list.getObjectSummaries()) {
                     String digest = summary.getKey().substring(prefixLength);
-                    if (!isMD5(digest)) {
+                    if (!isValidHash(digest, null, binaryManager)) {
                         // ignore files that cannot be MD5 digests for
                         // safety
                         continue;
