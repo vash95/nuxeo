@@ -42,25 +42,25 @@ import org.nuxeo.ecm.core.api.CoreSession;
 import org.nuxeo.ecm.core.api.DocumentModel;
 import org.nuxeo.ecm.core.api.IdRef;
 import org.nuxeo.ecm.core.api.PathRef;
-import org.nuxeo.ecm.core.test.CoreFeature;
 import org.nuxeo.ecm.core.test.annotations.Granularity;
 import org.nuxeo.ecm.core.test.annotations.RepositoryConfig;
 import org.nuxeo.ecm.platform.comment.api.Comment;
 import org.nuxeo.ecm.platform.comment.api.CommentImpl;
 import org.nuxeo.ecm.platform.comment.api.CommentManager;
 import org.nuxeo.ecm.platform.comment.api.CommentableDocument;
-import org.nuxeo.ecm.platform.comment.api.Comments;
 import org.nuxeo.ecm.platform.comment.api.exceptions.CommentNotFoundException;
 import org.nuxeo.ecm.platform.comment.service.CommentServiceConfig;
+import org.nuxeo.ecm.platform.test.PlatformFeature;
 import org.nuxeo.runtime.test.runner.Deploy;
 import org.nuxeo.runtime.test.runner.Features;
 import org.nuxeo.runtime.test.runner.FeaturesRunner;
+import org.nuxeo.runtime.test.runner.TransactionalFeature;
 
 /**
  * @since 10.3
  */
 @RunWith(FeaturesRunner.class)
-@Features(CoreFeature.class)
+@Features(PlatformFeature.class)
 @RepositoryConfig(cleanup = Granularity.METHOD)
 @Deploy("org.nuxeo.ecm.platform.comment.api")
 @Deploy("org.nuxeo.ecm.platform.comment")
@@ -73,6 +73,11 @@ public abstract class AbstractTestCommentManager {
 
     @Inject
     protected CommentManager commentManager;
+
+    @Inject
+    protected TransactionalFeature transactionalFeature;
+
+    public abstract Class<? extends CommentManager> getType();
 
     @Before
     public void init() {
@@ -114,28 +119,10 @@ public abstract class AbstractTestCommentManager {
         comment = commentManager.createComment(session, comment);
         assertEquals(author, comment.getAuthor());
         assertEquals(text, comment.getText());
-        assertTrue(comment.getAncestorIds().contains(doc.getId()));
-
-        // Create a comment in a specific location
-        DocumentModel commentModel = session.createDocumentModel(null, "Comment", COMMENT_DOC_TYPE);
-        commentModel.setPropertyValue("dc:created", Calendar.getInstance());
-        Comments.commentToDocumentModel(comment, commentModel);
-        commentModel = commentManager.createLocatedComment(doc, commentModel, FOLDER_COMMENT_CONTAINER);
-        // Check if Comments folder has been created in the given container
-        assertThat(session.getChildren(new PathRef(FOLDER_COMMENT_CONTAINER)).totalSize()).isEqualTo(1);
-
-        // Create a comment linked to a parent in a specific location
-        Comment newComment = new CommentImpl();
-        newComment.setParentId(commentModel.getId());
-        commentManager.createComment(session, newComment);
-        session.save();
-
-        // Check if both comments are linked and located accordingly
-        assertEquals(2, commentManager.getComments(session, doc.getId()).size());
-        assertEquals(1, commentManager.getComments(session, commentModel.getId()).size());
-        assertThat(commentModel.getPathAsString()).contains(FOLDER_COMMENT_CONTAINER);
-
+        assertEquals(doc.getRef(),
+                commentManager.getAncestorRef(session, new IdRef(comment.getId())));
     }
+
 
     @Test
     public void testGetComment() {
@@ -225,6 +212,11 @@ public abstract class AbstractTestCommentManager {
         commentableDocument.removeComment(newComment);
         assertTrue(commentableDocument.getComments().isEmpty());
 
+    }
+
+    @Test
+    public void testCommentManagerType() {
+        assertEquals(getType(), commentManager.getClass());
     }
 
     public static CommentServiceConfig newConfig() {
