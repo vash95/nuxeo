@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2006-2018 Nuxeo (http://nuxeo.com/) and others.
+ * (C) Copyright 2006-2019 Nuxeo (http://nuxeo.com/) and others.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,14 +19,12 @@
 
 package org.nuxeo.ecm.core.schema;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nuxeo.common.xmap.annotation.XNode;
 import org.nuxeo.common.xmap.annotation.XNodeList;
 import org.nuxeo.common.xmap.annotation.XObject;
+import org.nuxeo.runtime.model.Descriptor;
 
 /**
  * Document Type Descriptor.
@@ -40,7 +38,10 @@ import org.nuxeo.common.xmap.annotation.XObject;
  * @author <a href="mailto:bs@nuxeo.com">Bogdan Stefanescu</a>
  */
 @XObject("doctype")
-public class DocumentTypeDescriptor {
+public class DocumentTypeDescriptor implements Descriptor {
+
+    @XNode("@id")
+    public String id;
 
     @XNode("@name")
     public String name;
@@ -60,6 +61,14 @@ public class DocumentTypeDescriptor {
     @XNode("@append")
     public boolean append = false;
 
+    /**
+     * @since 11.1
+     *
+     * Allows to exclude the doctype from copy operations.
+     */
+    @XNode("@excludeFromCopy")
+    public Boolean excludeFromCopy;
+
     @XNodeList(value = "subtypes/type", type = String[].class, componentType = String.class)
     public String[] subtypes = new String[0];
 
@@ -77,7 +86,7 @@ public class DocumentTypeDescriptor {
     }
 
     public DocumentTypeDescriptor(String superTypeName, String name, SchemaDescriptor[] schemas, String[] facets,
-            String[] subtypes, String[] forbiddenSubtypes) {
+                                  String[] subtypes, String[] forbiddenSubtypes) {
         this(superTypeName, name, schemas, facets);
         this.subtypes = subtypes;
         this.forbiddenSubtypes = forbiddenSubtypes;
@@ -88,7 +97,6 @@ public class DocumentTypeDescriptor {
         return "DocType: " + name;
     }
 
-    @Override
     public DocumentTypeDescriptor clone() {
         DocumentTypeDescriptor clone = new DocumentTypeDescriptor();
         clone.name = name;
@@ -97,61 +105,34 @@ public class DocumentTypeDescriptor {
         clone.facets = facets;
         clone.prefetch = prefetch;
         clone.append = append;
+        clone.excludeFromCopy = excludeFromCopy;
         clone.subtypes = subtypes;
         clone.forbiddenSubtypes = forbiddenSubtypes;
         return clone;
     }
 
-    public DocumentTypeDescriptor merge(DocumentTypeDescriptor other) {
-        // only merge schemas, facets and prefetch
-        if (schemas == null) {
-            schemas = other.schemas;
-        } else {
-            if (other.schemas != null) {
-                List<SchemaDescriptor> mergedSchemas = new ArrayList<>(Arrays.asList(schemas));
-                mergedSchemas.addAll(Arrays.asList(other.schemas));
-                schemas = mergedSchemas.toArray(new SchemaDescriptor[mergedSchemas.size()]);
-            }
-        }
-        if (facets == null) {
-            facets = other.facets;
-        } else {
-            if (other.facets != null) {
-                List<String> mergedFacets = new ArrayList<>(Arrays.asList(facets));
-                mergedFacets.addAll(Arrays.asList(other.facets));
-                facets = mergedFacets.toArray(new String[mergedFacets.size()]);
-            }
-        }
-        if (prefetch == null) {
-            prefetch = other.prefetch;
-        } else {
-            if (other.prefetch != null) {
-                prefetch = prefetch + " " + other.prefetch;
-            }
-        }
-
+    @Override
+    public Descriptor merge(Descriptor o) {
+        DocumentTypeDescriptor other = (DocumentTypeDescriptor) o;
+        DocumentTypeDescriptor merged = new DocumentTypeDescriptor();
+        merged.id = id;
+        merged.schemas = ArrayUtils.addAll(other.schemas, schemas);
+        merged.facets = ArrayUtils.addAll(other.facets,facets);
+        merged.prefetch = prefetch == null ? other.prefetch : prefetch + " " + other.prefetch;
+        merged.excludeFromCopy = excludeFromCopy == null ? other.excludeFromCopy : excludeFromCopy;
         // update supertype
         if (StringUtils.isEmpty(superTypeName) && StringUtils.isNotEmpty(other.superTypeName)) {
-            superTypeName = other.superTypeName;
+            merged.superTypeName = other.superTypeName;
         }
-
-        // merge subtypes
-        if (subtypes == null) {
-            subtypes = other.subtypes;
-        } else if (other.subtypes != null) {
-            List<String> mergedTypes = new ArrayList<>(Arrays.asList(subtypes));
-            mergedTypes.addAll(Arrays.asList(other.subtypes));
-            subtypes = mergedTypes.toArray(new String[mergedTypes.size()]);
-        }
-        if (forbiddenSubtypes == null) {
-            forbiddenSubtypes = other.forbiddenSubtypes;
-        } else if (other.forbiddenSubtypes != null) {
-            List<String> mergedTypes = new ArrayList<>(Arrays.asList(forbiddenSubtypes));
-            mergedTypes.addAll(Arrays.asList(other.forbiddenSubtypes));
-            forbiddenSubtypes = mergedTypes.toArray(new String[mergedTypes.size()]);
-        }
+        merged.subtypes = subtypes == null ? other.subtypes : ArrayUtils.addAll(subtypes, other.subtypes);
+        merged.forbiddenSubtypes = forbiddenSubtypes == null ? other.forbiddenSubtypes : ArrayUtils.addAll(forbiddenSubtypes, other.forbiddenSubtypes);
 
         return this;
+    }
+
+    @Override
+    public String getId() {
+        return id;
     }
 
 }
