@@ -302,4 +302,13 @@ public interface DBSRepository extends Repository, LockManager {
 
     }
 
+    /**
+     * Abstracts queries with operators.
+     *
+     * @since 11.1
+     */
+    enum DBSQueryOperator {
+        NOT_IN, IN;
+    }
+
 }
