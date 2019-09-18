@@ -150,6 +150,9 @@ public class RetentionManagerImpl extends DefaultComponent implements RetentionM
         if (!rule.isDocTypeAccepted(document.getType())) {
             throw new NuxeoException("Rule does not accept this document type");
         }
+        if (document.hasFacet(RetentionConstants.RECORD_FACET)) {
+            throw new NuxeoException("Document is already a record");
+        }
     }
 
     @Override

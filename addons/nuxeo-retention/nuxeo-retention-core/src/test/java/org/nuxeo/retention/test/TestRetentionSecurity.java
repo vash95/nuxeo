@@ -35,6 +35,7 @@ import org.nuxeo.ecm.core.api.security.ACP;
 import org.nuxeo.ecm.core.api.security.impl.ACLImpl;
 import org.nuxeo.ecm.core.api.security.impl.ACPImpl;
 import org.nuxeo.retention.RetentionConstants;
+import org.nuxeo.retention.adapters.RetentionRule;
 import org.nuxeo.runtime.test.runner.Deploy;
 
 /**
@@ -100,7 +101,18 @@ public class TestRetentionSecurity extends RetentionTestCase {
             userSession.makeRecord(file.getRef());
             userSession.setLegalHold(file.getRef(), true, null);
         }
+    }
 
+    @Test
+    public void shouldNotBeAllowedToAttachTwoRules() {
+        RetentionRule rr = createManualImmediateRuleMillis(100L);
+        file = service.attachRule(file, rr, session);
+        try  {
+            service.attachRule(file, rr, session);
+            fail("Sould not be abe to attach rule twice");
+        } catch (NuxeoException e) {
+            // Expected
+        }
     }
 
 }
