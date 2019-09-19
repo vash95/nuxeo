@@ -20,6 +20,7 @@
 
 package org.nuxeo.ecm.platform.comment.impl;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static java.time.temporal.ChronoUnit.MILLIS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -51,6 +52,8 @@ import org.nuxeo.ecm.core.api.security.impl.ACPImpl;
 import org.nuxeo.ecm.platform.comment.AbstractTestCommentManager;
 import org.nuxeo.ecm.platform.comment.api.Comment;
 import org.nuxeo.ecm.platform.comment.api.CommentImpl;
+import org.nuxeo.ecm.platform.comment.api.CommentManager;
+import org.nuxeo.ecm.platform.comment.api.Comments;
 import org.nuxeo.ecm.platform.comment.api.exceptions.CommentNotFoundException;
 import org.nuxeo.ecm.platform.comment.api.exceptions.CommentSecurityException;
 import org.nuxeo.runtime.test.runner.Deploy;
@@ -535,7 +538,7 @@ public class TestPropertyCommentManager extends AbstractTestCommentManager {
     public void testCreateCommentAsRegularUser() {
 
         DocumentModel domain = session.createDocumentModel("/", "domain", "Domain");
-        session.createDocument(domain);
+        domain = session.createDocument(domain);
         DocumentModel doc = session.createDocumentModel("/domain", "test", "File");
         doc = session.createDocument(doc);
         ACPImpl acp = new ACPImpl();
@@ -561,12 +564,12 @@ public class TestPropertyCommentManager extends AbstractTestCommentManager {
             subComment.setText(text);
             subComment.setParentId(createdComment.getId());
 
-            Comment createdSubComment = commentManager.createComment(johnSession, subComment);
-            assertEquals(createdComment.getId(), createdSubComment.getParentId());
+            Comment createdSubcomment = commentManager.createComment(johnSession, subComment);
+            assertEquals(createdComment.getId(), createdSubcomment.getParentId());
         }
 
         try (CloseableCoreSession janeSession = CoreInstance.openCoreSession(doc.getRepositoryName(), "jane")) {
-            commentManager.createComment(janeSession, comment);
+            Comment createdComment = commentManager.createComment(janeSession, comment);
             fail("jane should not be able to create comment");
         } catch (CommentSecurityException e) {
             assertEquals("The user jane can not create comments on document " + doc.getId(), e.getMessage());
@@ -577,7 +580,7 @@ public class TestPropertyCommentManager extends AbstractTestCommentManager {
     public void testGetCommentAsRegularUser() {
 
         DocumentModel domain = session.createDocumentModel("/", "domain", "Domain");
-        session.createDocument(domain);
+        domain = session.createDocument(domain);
         DocumentModel doc = session.createDocumentModel("/domain", "test", "File");
         doc = session.createDocument(doc);
         ACPImpl acp = new ACPImpl();
@@ -607,19 +610,19 @@ public class TestPropertyCommentManager extends AbstractTestCommentManager {
         try (CloseableCoreSession johnSession = CoreInstance.openCoreSession(doc.getRepositoryName(), "john")) {
             Comment createdComment = commentManager.getComment(johnSession, comment.getId());
             assertEquals(doc.getId(), createdComment.getParentId());
-            Comment createdSubComment = commentManager.getComment(johnSession, subComment.getId());
-            assertEquals(comment.getId(), createdSubComment.getParentId());
+            Comment createdSubcomment = commentManager.getComment(johnSession, subComment.getId());
+            assertEquals(comment.getId(), createdSubcomment.getParentId());
         }
 
         try (CloseableCoreSession janeSession = CoreInstance.openCoreSession(doc.getRepositoryName(), "jane")) {
-            commentManager.getComment(janeSession, comment.getId());
+            Comment createdComment = commentManager.getComment(janeSession, comment.getId());
             fail("jane should not be able to get comment");
         } catch (CommentSecurityException e) {
             assertEquals("The user jane does not have access to the comments of document " + doc.getId(),
                     e.getMessage());
         }
         try (CloseableCoreSession janeSession = CoreInstance.openCoreSession(doc.getRepositoryName(), "jane")) {
-            commentManager.getComment(janeSession, subComment.getId());
+            Comment createdComment = commentManager.getComment(janeSession, subComment.getId());
             fail("jane should not be able to get comment");
         } catch (CommentSecurityException e) {
             assertEquals("The user jane does not have access to the comments of document " + doc.getId(),
@@ -631,7 +634,7 @@ public class TestPropertyCommentManager extends AbstractTestCommentManager {
     public void testUpdateCommentAsRegularUser() {
 
         DocumentModel domain = session.createDocumentModel("/", "domain", "Domain");
-        session.createDocument(domain);
+        domain = session.createDocument(domain);
         DocumentModel doc = session.createDocumentModel("/domain", "test", "File");
         doc = session.createDocument(doc);
         ACPImpl acp = new ACPImpl();
@@ -685,7 +688,7 @@ public class TestPropertyCommentManager extends AbstractTestCommentManager {
     public void testDeleteCommentAsRegularUser() {
 
         DocumentModel domain = session.createDocumentModel("/", "domain", "Domain");
-        session.createDocument(domain);
+        domain = session.createDocument(domain);
         DocumentModel doc = session.createDocumentModel("/domain", "test", "File");
         doc = session.createDocument(doc);
         ACPImpl acp = new ACPImpl();
@@ -715,7 +718,7 @@ public class TestPropertyCommentManager extends AbstractTestCommentManager {
         comment2 = commentManager.createComment(session, comment2);
         comment3 = commentManager.createComment(session, comment3);
 
-        Comment comment4 = new CommentImpl();
+        Comment comment4= new CommentImpl();
         comment4.setAuthor(author);
         comment4.setParentId(comment3.getId());
         comment4 = commentManager.createComment(session, comment4);
@@ -748,7 +751,7 @@ public class TestPropertyCommentManager extends AbstractTestCommentManager {
     public void testGetComments() {
 
         DocumentModel domain = session.createDocumentModel("/", "domain", "Domain");
-        session.createDocument(domain);
+        domain = session.createDocument(domain);
         DocumentModel doc = session.createDocumentModel("/domain", "test", "File");
         doc = session.createDocument(doc);
         ACPImpl acp = new ACPImpl();
@@ -764,7 +767,7 @@ public class TestPropertyCommentManager extends AbstractTestCommentManager {
         comment1.setAuthor(author);
         comment1.setParentId(doc.getId());
 
-        commentManager.createComment(session, comment1);
+        comment1 = commentManager.createComment(session, comment1);
 
         Comment comment2 = new CommentImpl();
         comment2.setAuthor(author);
@@ -772,10 +775,10 @@ public class TestPropertyCommentManager extends AbstractTestCommentManager {
 
         comment2 = commentManager.createComment(session, comment2);
 
-        Comment comment3 = new CommentImpl();
+        Comment comment3= new CommentImpl();
         comment3.setAuthor(author);
         comment3.setParentId(comment2.getId());
-        commentManager.createComment(session, comment3);
+        comment3 = commentManager.createComment(session, comment3);
         session.save();
 
         try (CloseableCoreSession johnSession = CoreInstance.openCoreSession(doc.getRepositoryName(), "john")) {
@@ -800,6 +803,34 @@ public class TestPropertyCommentManager extends AbstractTestCommentManager {
 
     }
 
+    @Test
+    public void testCreateLocalComment() {
+        DocumentModel domain = session.createDocumentModel("/", "domain", "Domain");
+        session.createDocument(domain);
+        DocumentModel doc = session.createDocumentModel("/domain", "test", "File");
+        doc = session.createDocument(doc);
+        session.save();
+
+        String author = "toto";
+        String text = "I am a comment !";
+        Comment comment = new CommentImpl();
+        comment.setAuthor(author);
+        comment.setText(text);
+
+        // Create a comment in a specific location
+        DocumentModel commentModel = session.createDocumentModel(null, "Comment", COMMENT_DOC_TYPE);
+        commentModel = session.createDocument(commentModel);
+        commentModel.setPropertyValue("dc:created", Calendar.getInstance());
+        Comments.commentToDocumentModel(comment, commentModel);
+        commentModel = commentManager.createLocatedComment(doc, commentModel, FOLDER_COMMENT_CONTAINER);
+
+        // Check if Comments folder has been created in the given container
+        assertThat(session.getChildren(new PathRef(FOLDER_COMMENT_CONTAINER)).totalSize()).isEqualTo(1);
+
+        assertThat(commentModel.getPathAsString()).contains(FOLDER_COMMENT_CONTAINER);
+    }
+
+
     protected DocumentModel createTestFileAndUser(String user) {
         DocumentModel domain = session.createDocumentModel("/", "domain", "Domain");
         domain = session.createDocument(domain);
@@ -817,7 +848,7 @@ public class TestPropertyCommentManager extends AbstractTestCommentManager {
     }
 
     protected void testManageComments(CoreSession session, String commentId) {
-        // Read
+        //Read
         Comment comment = commentManager.getComment(session, commentId);
 
         // Update
@@ -829,7 +860,7 @@ public class TestPropertyCommentManager extends AbstractTestCommentManager {
     }
 
     protected Comment createSampleComment(String parentId, String author, String text) {
-        return createSampleComments(1, parentId, author, text).get(0);
+        return createSampleComments(1, parentId,author,text).get(0);
     }
 
     protected List<Comment> createSampleComments(int nbComments, String parentId, String author, String text) {
@@ -844,5 +875,10 @@ public class TestPropertyCommentManager extends AbstractTestCommentManager {
             comments.add(comment);
         }
         return comments;
+    }
+
+    @Override
+    public Class<? extends CommentManager> getType() {
+        return PropertyCommentManager.class;
     }
 }
