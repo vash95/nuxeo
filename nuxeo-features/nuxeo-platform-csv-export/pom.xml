@@ -9,6 +9,10 @@
   <name>Nuxeo CSV Export</name>
 
   <dependencies>
+	<dependency>
+		<groupId>org.nuxeo.ecm.platform</groupId>
+		<artifactId>nuxeo-platform-audit-api</artifactId>
+	</dependency>
     <dependency>
       <groupId>org.nuxeo.ecm.core</groupId>
       <artifactId>nuxeo-core-bulk</artifactId>

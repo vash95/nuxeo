@@ -7,5 +7,6 @@
     <register class="org.nuxeo.ecm.platform.csv.export.io.DocumentModelListCSVWriter" enable="true" />
     <register class="org.nuxeo.ecm.platform.csv.export.io.DocumentModelCSVWriter" enable="true" />
     <register class="org.nuxeo.ecm.platform.csv.export.io.DocumentPropertyCSVWriter" enable="true" />
+    <register class="org.nuxeo.ecm.platform.csv.export.io.LogEntryCSVWriter" enable="true" />
   </extension>
 </component>
