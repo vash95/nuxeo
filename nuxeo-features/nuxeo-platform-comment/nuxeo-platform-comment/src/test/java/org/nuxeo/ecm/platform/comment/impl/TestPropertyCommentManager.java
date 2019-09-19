@@ -20,8 +20,8 @@
 
 package org.nuxeo.ecm.platform.comment.impl;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static java.time.temporal.ChronoUnit.MILLIS;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -718,7 +718,7 @@ public class TestPropertyCommentManager extends AbstractTestCommentManager {
         comment2 = commentManager.createComment(session, comment2);
         comment3 = commentManager.createComment(session, comment3);
 
-        Comment comment4= new CommentImpl();
+        Comment comment4 = new CommentImpl();
         comment4.setAuthor(author);
         comment4.setParentId(comment3.getId());
         comment4 = commentManager.createComment(session, comment4);
@@ -775,7 +775,7 @@ public class TestPropertyCommentManager extends AbstractTestCommentManager {
 
         comment2 = commentManager.createComment(session, comment2);
 
-        Comment comment3= new CommentImpl();
+        Comment comment3 = new CommentImpl();
         comment3.setAuthor(author);
         comment3.setParentId(comment2.getId());
         comment3 = commentManager.createComment(session, comment3);
@@ -830,7 +830,6 @@ public class TestPropertyCommentManager extends AbstractTestCommentManager {
         assertThat(commentModel.getPathAsString()).contains(FOLDER_COMMENT_CONTAINER);
     }
 
-
     protected DocumentModel createTestFileAndUser(String user) {
         DocumentModel domain = session.createDocumentModel("/", "domain", "Domain");
         domain = session.createDocument(domain);
@@ -848,7 +847,7 @@ public class TestPropertyCommentManager extends AbstractTestCommentManager {
     }
 
     protected void testManageComments(CoreSession session, String commentId) {
-        //Read
+        // Read
         Comment comment = commentManager.getComment(session, commentId);
 
         // Update
@@ -860,7 +859,7 @@ public class TestPropertyCommentManager extends AbstractTestCommentManager {
     }
 
     protected Comment createSampleComment(String parentId, String author, String text) {
-        return createSampleComments(1, parentId,author,text).get(0);
+        return createSampleComments(1, parentId, author, text).get(0);
     }
 
     protected List<Comment> createSampleComments(int nbComments, String parentId, String author, String text) {
