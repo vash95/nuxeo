@@ -365,23 +365,23 @@ public class DBSSession implements Session<QueryFilter> {
 
     protected List<String> getAllChildrenIds(String parentId) {
         // We want all children, the filter flags are null
-        Boolean specialChildrenFilter = null;
-        Boolean regularChildrenFilter = null;
+        boolean specialChildrenFilter = false;
+        boolean regularChildrenFilter = false;
         return internalGetChildrenIds(parentId, specialChildrenFilter, regularChildrenFilter);
     }
 
-    protected List<String> getChildrenIds(String parentId, Boolean excludeSpecialChildren,
-            Boolean excludeRegularChildren) {
+    protected List<String> getChildrenIds(String parentId, boolean excludeSpecialChildren,
+            boolean excludeRegularChildren) {
         return internalGetChildrenIds(parentId, excludeSpecialChildren, excludeRegularChildren);
     }
 
-    protected List<String> internalGetChildrenIds(String parentId, Boolean excludeSpecialChildren,
-            Boolean excludeRegularChildren) {
+    protected List<String> internalGetChildrenIds(String parentId, boolean excludeSpecialChildren,
+            boolean excludeRegularChildren) {
         if (isOrderable(parentId)) {
             // TODO get only id and pos, not full state
             // TODO state not for update
             List<DBSDocumentState> docStates;
-            if (excludeSpecialChildren == null && excludeRegularChildren == null) {
+            if (!excludeSpecialChildren && !excludeRegularChildren) {
                 docStates = transaction.getAllChildrenStates(parentId);
             } else {
                 docStates = transaction.getChildrenStates(parentId, excludeSpecialChildren, excludeRegularChildren);
@@ -393,7 +393,7 @@ public class DBSSession implements Session<QueryFilter> {
             }
             return children;
         } else {
-            if (excludeSpecialChildren == null && excludeRegularChildren == null) {
+            if (!excludeSpecialChildren && !excludeRegularChildren) {
                 return transaction.getAllChildrenIds(parentId);
             } else {
                 return transaction.getChildrenIds(parentId, excludeSpecialChildren, excludeRegularChildren);

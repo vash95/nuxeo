@@ -302,6 +302,10 @@ public class DBSTransactionState {
 
     public List<DBSDocumentState> getChildrenStates(String parentId, boolean excludeSpecialChildren,
             boolean excludeRegularChildren) {
+        // No flags, get all children
+        if(!excludeSpecialChildren && !excludeRegularChildren) {
+            return getAllChildrenStates(parentId);
+        }
         List<DBSDocumentState> docStates = new LinkedList<>();
         Set<String> seen = new HashSet<>();
         Set<String> specialChildrenTypesNamesSet = getSpecialChildrenTypesNamesSet();
@@ -310,10 +314,10 @@ public class DBSTransactionState {
             if (!parentId.equals(docState.getParentId())) {
                 continue;
             }
-            if (specialChildrenTypesNamesSet.contains(docState.getPrimaryType()) && excludeSpecialChildren == true) {
+            if (specialChildrenTypesNamesSet.contains(docState.getPrimaryType()) && excludeSpecialChildren) {
                 continue;
             }
-            if (!specialChildrenTypesNamesSet.contains(docState.getPrimaryType()) && excludeRegularChildren == true) {
+            if (!specialChildrenTypesNamesSet.contains(docState.getPrimaryType()) && excludeRegularChildren) {
                 continue;
             }
             docStates.add(docState);
@@ -358,11 +362,15 @@ public class DBSTransactionState {
         }
         // fetch from repository
         List<State> states = repository.queryKeyValue(KEY_PARENT_ID, parentId, seen);
-        return internalGetChildren(parentId, children, seen, states);
+        return internalGetChildren(children, states);
     }
 
     public List<String> getChildrenIds(String parentId, boolean excludeSpecialChildren,
             boolean excludeRegularChildren) {
+        // No flags, get all children
+        if(!excludeSpecialChildren && !excludeRegularChildren) {
+            return getAllChildrenIds(parentId);
+        }
         List<String> children = new ArrayList<>();
         Set<String> seen = new HashSet<>();
         Set<String> specialChildrenTypesNamesSet = getSpecialChildrenTypesNamesSet();
@@ -372,10 +380,10 @@ public class DBSTransactionState {
             if (!parentId.equals(docState.getParentId())) {
                 continue;
             }
-            if (specialChildrenTypesNamesSet.contains(docState.getPrimaryType()) && excludeSpecialChildren == true) {
+            if (specialChildrenTypesNamesSet.contains(docState.getPrimaryType()) && excludeSpecialChildren) {
                 continue;
             }
-            if (!specialChildrenTypesNamesSet.contains(docState.getPrimaryType()) && excludeRegularChildren == true) {
+            if (!specialChildrenTypesNamesSet.contains(docState.getPrimaryType()) && excludeRegularChildren) {
                 continue;
             }
             seen.add(id);
@@ -385,11 +393,10 @@ public class DBSTransactionState {
         DBSQueryOperator operator = excludeSpecialChildren == true ? DBSQueryOperator.NOT_IN : DBSQueryOperator.IN;
         List<State> states = repository.queryKeyValueWithOperator(KEY_PARENT_ID, parentId, KEY_PRIMARY_TYPE,
                 operator, getSpecialChildrenTypesNamesSet(), seen);
-        return internalGetChildren(parentId, children, seen, states);
+        return internalGetChildren(children, states);
     }
 
-    protected List<String> internalGetChildren(String parentId, List<String> children, Set<String> seen,
-            List<State> states) {
+    protected List<String> internalGetChildren(List<String> children, List<State> states) {
         for (State state : states) {
             String id = (String) state.get(KEY_ID);
             if (transientStates.containsKey(id)) {
