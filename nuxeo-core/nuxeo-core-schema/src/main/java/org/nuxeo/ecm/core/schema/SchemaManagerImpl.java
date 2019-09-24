@@ -121,7 +121,7 @@ public class SchemaManagerImpl implements SchemaManager {
     /** Effective document types. */
     protected Map<String, DocumentTypeImpl> documentTypes = new HashMap<>();
 
-    protected Map<String, DocumentTypeImpl> specialDocumentTypes = new HashMap<>();
+    protected Set<String> specialDocumentTypes = new HashSet<>();
 
     protected Map<String, Set<String>> documentTypesExtending = new HashMap<>();
 
@@ -581,12 +581,10 @@ public class SchemaManagerImpl implements SchemaManager {
         }
 
         // special document types (excluded from copy)
-        specialDocumentTypes.clear();
-        Set<String> specials = allDocumentTypes.stream()
-                .filter(d -> Boolean.TRUE.equals(d.excludeFromCopy))
-                .map(d -> d.name)
-                .collect(Collectors.toSet());
-        specialDocumentTypes = documentTypes.values().stream().filter(d -> specials.contains(d.getName())).collect(Collectors.toMap(DocumentType::getName, d -> d));
+        specialDocumentTypes = allDocumentTypes.stream()
+                                               .filter(d -> Boolean.TRUE.equals(d.isSpecial))
+                                               .map(d -> d.name)
+                                               .collect(Collectors.toSet());
     }
 
     protected DocumentTypeDescriptor mergeDocumentTypeDescriptors(DocumentTypeDescriptor src,
@@ -1013,8 +1011,8 @@ public class SchemaManagerImpl implements SchemaManager {
     }
 
     @Override
-    public List<DocumentType> getSpecialDocumentTypes() {
+    public Set<String> getSpecialDocumentTypes() {
         checkDirty();
-        return specialDocumentTypes.values().stream().collect(Collectors.toList());
+        return specialDocumentTypes;
     }
 }

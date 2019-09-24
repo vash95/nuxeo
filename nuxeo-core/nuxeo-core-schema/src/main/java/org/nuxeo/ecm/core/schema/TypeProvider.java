@@ -20,7 +20,7 @@
 
 package org.nuxeo.ecm.core.schema;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -48,8 +48,8 @@ public interface TypeProvider {
      * Gets the list of document types excluded from copy.
      * @since 11.1
      */
-    default List<DocumentType> getSpecialDocumentTypes() {
-        return new ArrayList<>();
+    default Set<String> getSpecialDocumentTypes() {
+        return Collections.emptySet();
     }
 
     /** Gets a facet. */

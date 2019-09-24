@@ -117,8 +117,8 @@ public class MongoDBConverter {
             return listToBson(Arrays.asList((Object[]) value));
         } else if (value instanceof Map) {
             // value is a single entry map containing an operator as the key
-            if(((Map)value).size() == 1) {
-                Map valueMap = (Map<DBSQueryOperator, String>) value;
+            if (((Map) value).size() == 1) {
+                Map<DBSQueryOperator, HashSet<String>> valueMap = (Map) value;
                 if (valueMap.containsKey(DBSQueryOperator.IN)) {
                     value = Collections.singletonMap(IN, valueMap.get(DBSQueryOperator.IN));
                 } else if (valueMap.containsKey(DBSQueryOperator.NOT_IN)) {

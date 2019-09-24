@@ -15,7 +15,7 @@
       <schema name="externalEntity" />
     </facet>
 
-    <doctype name="CommentRoot" extends="Folder" excludeFromCopy="true">
+    <doctype name="CommentRoot" extends="Folder" isSpecial="true">
       <facet name="HiddenInNavigation" />
       <facet name="HiddenInCreation" />
       <subtypes>

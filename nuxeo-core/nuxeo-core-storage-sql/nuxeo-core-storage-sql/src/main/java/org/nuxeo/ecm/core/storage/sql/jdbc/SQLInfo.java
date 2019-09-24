@@ -1022,7 +1022,6 @@ public class SQLInfo {
             SchemaManager schemaManager = Framework.getService(SchemaManager.class);
             String excludedTypes = schemaManager.getSpecialDocumentTypes()
                                                 .stream()
-                                                .map(d -> d.getName())
                                                 .collect(Collectors.joining("', '"));
             if (!excludedTypes.isEmpty()) {
                 String excludeSpecialChildrenClause = " AND "

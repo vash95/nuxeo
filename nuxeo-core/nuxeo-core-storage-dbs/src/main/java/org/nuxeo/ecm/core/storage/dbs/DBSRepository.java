@@ -195,6 +195,22 @@ public interface DBSRepository extends Repository, LockManager {
     List<State> queryKeyValue(String key1, Object value1, String key2, Object value2, Set<String> ignored);
 
     /**
+     * Queries the repository for documents having key1 = value1 and key2 ${operator} value2.
+     *
+     * @param key1 the first key
+     * @param value1 the first value
+     * @param key2 the second key
+     * @param operator the operator to apply between key2 and value2
+     * @param value2
+     * @param ignored
+     * @return
+     * @since TODO
+     */
+    default List<State> queryKeyValueWithOperator(String key1, Object value1, String key2, DBSQueryOperator operator, Object value2, Set<String> ignored) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
      * Returns a stream of descendants from a given root document, in no particular order. This does not include
      * information about the root document itself.
      * <p>
