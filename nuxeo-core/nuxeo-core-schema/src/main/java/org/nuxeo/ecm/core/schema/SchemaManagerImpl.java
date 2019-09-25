@@ -581,8 +581,8 @@ public class SchemaManagerImpl implements SchemaManager {
         }
 
         // special document types (excluded from copy)
-        specialDocumentTypes = allDocumentTypes.stream()
-                                               .filter(d -> Boolean.TRUE.equals(d.isSpecial))
+        specialDocumentTypes = dtds.values().stream()
+                                               .filter(d -> Boolean.TRUE.equals(d.special))
                                                .map(d -> d.name)
                                                .collect(Collectors.toSet());
     }

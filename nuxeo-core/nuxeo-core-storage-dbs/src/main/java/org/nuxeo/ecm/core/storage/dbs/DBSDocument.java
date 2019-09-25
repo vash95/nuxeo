@@ -351,7 +351,7 @@ public class DBSDocument extends BaseDocument<State> {
 
     @Override
     public List<String> getChildrenIds() {
-        return session.getAllChildrenIds(id);
+        return session.getChildrenIds(id);
     }
 
     @Override

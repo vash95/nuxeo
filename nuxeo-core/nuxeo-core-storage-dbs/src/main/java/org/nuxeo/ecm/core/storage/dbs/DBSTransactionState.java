@@ -284,7 +284,7 @@ public class DBSTransactionState {
         return repository.hasChild(parentId, name, Collections.emptySet());
     }
 
-    public List<DBSDocumentState> getAllChildrenStates(String parentId) {
+    public List<DBSDocumentState> getChildrenStates(String parentId) {
         return getChildrenStates(parentId, false, false);
     }
 
@@ -330,7 +330,7 @@ public class DBSTransactionState {
         return docStates;
     }
 
-    public List<String> getAllChildrenIds(String parentId) {
+    public List<String> getChildrenIds(String parentId) {
         return getChildrenIds(parentId, false, false);
     }
 

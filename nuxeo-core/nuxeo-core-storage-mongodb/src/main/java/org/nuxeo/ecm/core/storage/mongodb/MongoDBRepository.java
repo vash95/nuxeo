@@ -809,7 +809,7 @@ public class MongoDBRepository extends DBSRepositoryBase {
             Object ownerOrNull = Arrays.asList(owner, null);
             filter.put(KEY_LOCK_OWNER, new Document(QueryOperators.IN, ownerOrNull));
         } // else unconditional remove
-          // remove the lock
+        // remove the lock
         if (log.isTraceEnabled()) {
             log.trace("MongoDB: FINDANDMODIFY " + filter + " UPDATE " + UNSET_LOCK_UPDATE);
         }

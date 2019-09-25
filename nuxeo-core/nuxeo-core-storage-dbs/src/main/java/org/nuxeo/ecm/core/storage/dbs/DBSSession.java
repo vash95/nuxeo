@@ -345,7 +345,7 @@ public class DBSSession implements Session<QueryFilter> {
     }
 
     protected List<Document> getChildren(String parentId) {
-        List<DBSDocumentState> docStates = transaction.getAllChildrenStates(parentId);
+        List<DBSDocumentState> docStates = transaction.getChildrenStates(parentId);
         if (isOrderable(parentId)) {
             // sort children in order
             docStates.sort(POS_COMPARATOR);
@@ -363,7 +363,7 @@ public class DBSSession implements Session<QueryFilter> {
         return children;
     }
 
-    protected List<String> getAllChildrenIds(String parentId) {
+    protected List<String> getChildrenIds(String parentId) {
         // We want all children, the filter flags are null
         boolean excludeSpecialChildren = false;
         boolean excludeRegularChildren = false;
@@ -375,8 +375,8 @@ public class DBSSession implements Session<QueryFilter> {
         if (isOrderable(parentId)) {
             // TODO get only id and pos, not full state
             // TODO state not for update
-            List<DBSDocumentState> docStates;
-            docStates = transaction.getChildrenStates(parentId, excludeSpecialChildren, excludeRegularChildren);
+            List<DBSDocumentState> docStates = //
+                    transaction.getChildrenStates(parentId, excludeSpecialChildren, excludeRegularChildren);
             docStates.sort(POS_COMPARATOR);
             List<String> children = new ArrayList<>(docStates.size());
             for (DBSDocumentState docState : docStates) {
@@ -495,7 +495,7 @@ public class DBSSession implements Session<QueryFilter> {
             return null;
         }
         long max = -1;
-        for (DBSDocumentState docState : transaction.getAllChildrenStates(parentId)) {
+        for (DBSDocumentState docState : transaction.getChildrenStates(parentId)) {
             Long pos = (Long) docState.get(KEY_POS);
             if (pos != null && pos > max) {
                 max = pos;
@@ -515,7 +515,7 @@ public class DBSSession implements Session<QueryFilter> {
         // This is optimized by assuming the number of children is small enough
         // to be manageable in-memory.
         // fetch children
-        List<DBSDocumentState> docStates = transaction.getAllChildrenStates(parentId);
+        List<DBSDocumentState> docStates = transaction.getChildrenStates(parentId);
         // sort children in order
         docStates.sort(POS_COMPARATOR);
         // renumber

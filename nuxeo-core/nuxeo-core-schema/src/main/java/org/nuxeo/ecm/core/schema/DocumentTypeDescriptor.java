@@ -65,8 +65,8 @@ public class DocumentTypeDescriptor {
      *
      * @since 11.1
      */
-    @XNode("@isSpecial")
-    public Boolean isSpecial;
+    @XNode("@special")
+    public Boolean special;
 
     @XNodeList(value = "subtypes/type", type = String[].class, componentType = String.class)
     public String[] subtypes = new String[0];
@@ -105,7 +105,7 @@ public class DocumentTypeDescriptor {
         clone.facets = facets;
         clone.prefetch = prefetch;
         clone.append = append;
-        clone.isSpecial = isSpecial;
+        clone.special = special;
         clone.subtypes = subtypes;
         clone.forbiddenSubtypes = forbiddenSubtypes;
         return clone;
@@ -139,7 +139,7 @@ public class DocumentTypeDescriptor {
             }
         }
 
-        isSpecial = isSpecial == null ? other.isSpecial : isSpecial;
+        special = special == null ? other.special : special;
 
         // update supertype
         if (StringUtils.isEmpty(superTypeName) && StringUtils.isNotEmpty(other.superTypeName)) {
