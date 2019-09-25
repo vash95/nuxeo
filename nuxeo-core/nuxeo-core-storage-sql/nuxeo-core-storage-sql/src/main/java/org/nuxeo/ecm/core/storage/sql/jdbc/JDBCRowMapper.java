@@ -1078,7 +1078,7 @@ public class JDBCRowMapper extends JDBCConnection implements RowMapper {
 
         // recurse in children, exclude regular children (in the case of a versionable folderish)
         boolean excludeRegularChildren = parentId == null;
-        for (IdWithTypes child : getChildrenIdsWithTypes(source.id, excludeRegularChildren, excludeSpecialChildren)) {
+        for (IdWithTypes child : getChildrenIdsWithTypes(source.id, excludeSpecialChildren, excludeRegularChildren)) {
             copyHierRecursive(child, newId, null, null, resetVersion, idMap, idToTypes, excludeSpecialChildren);
         }
         return newId;
@@ -1152,9 +1152,9 @@ public class JDBCRowMapper extends JDBCConnection implements RowMapper {
     /**
      * Gets the children ids and types of a node.
      */
-    protected List<IdWithTypes> getChildrenIdsWithTypes(Serializable id, boolean excludeRegularChildren, boolean excludeSpecialChildren) throws SQLException {
+    protected List<IdWithTypes> getChildrenIdsWithTypes(Serializable id, boolean excludeSpecialChildren, boolean excludeRegularChildren) throws SQLException {
         List<IdWithTypes> children = new LinkedList<>();
-        String sql = sqlInfo.getSelectChildrenIdsAndTypesSql(excludeRegularChildren, excludeSpecialChildren);
+        String sql = sqlInfo.getSelectChildrenIdsAndTypesSql(excludeSpecialChildren, excludeRegularChildren);
         if (logger.isLogEnabled()) {
             logger.logSQL(sql, Collections.singletonList(id));
         }

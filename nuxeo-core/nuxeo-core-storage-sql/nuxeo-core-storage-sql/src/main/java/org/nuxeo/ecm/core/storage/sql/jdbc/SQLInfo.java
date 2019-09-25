@@ -214,7 +214,7 @@ public class SQLInfo {
 
     }
 
-    public String getSelectChildrenIdsAndTypesSql(boolean excludeRegularChildren, boolean excludeSpecialChildren) {
+    public String getSelectChildrenIdsAndTypesSql(boolean excludeSpecialChildren, boolean excludeRegularChildren) {
         if (excludeRegularChildren) {
             return excludeSpecialChildren ? selectComplexChildrenIdsAndTypesSql
                     : selectComplexChildrenIdsAndTypesSqlIncludeSpecialChildren;

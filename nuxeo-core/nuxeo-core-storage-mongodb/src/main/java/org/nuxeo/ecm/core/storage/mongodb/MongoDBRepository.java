@@ -227,7 +227,7 @@ public class MongoDBRepository extends DBSRepositoryBase {
         coll.createIndex(Indexes.ascending(KEY_PRIMARY_TYPE));
         coll.createIndex(Indexes.ascending(KEY_LIFECYCLE_STATE));
         coll.createIndex(Indexes.ascending(KEY_IS_TRASHED));
-        if(!isFulltextDisabled()) {
+        if (!isFulltextDisabled()) {
             coll.createIndex(Indexes.ascending(KEY_FULLTEXT_JOBID));
         }
         coll.createIndex(Indexes.ascending(KEY_ACP + "." + KEY_ACL + "." + KEY_ACE_USER));
@@ -305,8 +305,8 @@ public class MongoDBRepository extends DBSRepositoryBase {
         List<Document> docs = states.stream().map(converter::stateToBson).collect(Collectors.toList());
         if (log.isTraceEnabled()) {
             log.trace("MongoDB: CREATE ["
-                    + docs.stream().map(doc -> doc.get(idKey).toString()).collect(Collectors.joining(", "))
-                    + "]: " + docs);
+                    + docs.stream().map(doc -> doc.get(idKey).toString()).collect(Collectors.joining(", ")) + "]: "
+                    + docs);
         }
         coll.insertMany(docs);
     }
@@ -440,12 +440,15 @@ public class MongoDBRepository extends DBSRepositoryBase {
     @Override
     public List<State> queryKeyValueWithOperator(String key1, Object value1, String key2, DBSQueryOperator operator,
             Object value2, Set<String> ignored) {
-        Map<String, Object> comparatorAndValue = null;
-        if (DBSQueryOperator.IN == operator) {
+        Map<String, Object> comparatorAndValue;
+        switch (operator) {
+        case IN:
             comparatorAndValue = Collections.singletonMap(QueryOperators.IN, value2);
-        } else if (DBSQueryOperator.NOT_IN == operator) {
+            break;
+        case NOT_IN:
             comparatorAndValue = Collections.singletonMap(QueryOperators.NIN, value2);
-        } else {
+            break;
+        default:
             throw new IllegalArgumentException(String.format("Unknown operator: %s", operator));
         }
         Document filter = new Document(converter.keyToBson(key1), value1);
@@ -806,7 +809,7 @@ public class MongoDBRepository extends DBSRepositoryBase {
             Object ownerOrNull = Arrays.asList(owner, null);
             filter.put(KEY_LOCK_OWNER, new Document(QueryOperators.IN, ownerOrNull));
         } // else unconditional remove
-        // remove the lock
+          // remove the lock
         if (log.isTraceEnabled()) {
             log.trace("MongoDB: FINDANDMODIFY " + filter + " UPDATE " + UNSET_LOCK_UPDATE);
         }

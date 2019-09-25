@@ -317,10 +317,6 @@ public class DBSTransactionState {
             states = repository.queryKeyValueWithOperator(KEY_PARENT_ID, parentId, KEY_PRIMARY_TYPE, operator,
                     specialChildrenTypes, seen);
         }
-        return getDocumentStates(docStates, states);
-    }
-
-    protected List<DBSDocumentState> getDocumentStates(List<DBSDocumentState> docStates, List<State> states) {
         for (State state : states) {
             String id = (String) state.get(KEY_ID);
             if (transientStates.containsKey(id)) {
@@ -368,10 +364,6 @@ public class DBSTransactionState {
             states = repository.queryKeyValueWithOperator(KEY_PARENT_ID, parentId, KEY_PRIMARY_TYPE, operator,
                     specialChildrenTypes, seen);
         }
-        return internalGetChildren(children, states);
-    }
-
-    protected List<String> internalGetChildren(List<String> children, List<State> states) {
         for (State state : states) {
             String id = (String) state.get(KEY_ID);
             if (transientStates.containsKey(id)) {
