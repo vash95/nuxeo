@@ -128,7 +128,7 @@ public class CopyDocumentTest {
         assertEquals(SPECIAL_CHILD_DOC_NAME, versionedChild.getName());
         assertNotEquals(regularChildDoc.getRef(), versionedChild.getRef());
 
-        // regular documments under the special children shall be copied as well
+        // regular documents under the special children shall be copied as well
         children = session.getChildren(versionedChild.getRef());
         assertEquals(1, children.totalSize());
         DocumentModel versionedSubChild = children.get(0);
