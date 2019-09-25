@@ -211,8 +211,9 @@ pipeline {
             """
             echo "Build and push Docker image to ${DOCKER_REGISTRY}"
             sh """
-              envsubst < nuxeo-distribution/nuxeo-server-tomcat/skaffold.yaml > nuxeo-distribution/nuxeo-server-tomcat/skaffold.yaml~gen
-              skaffold build -f nuxeo-distribution/nuxeo-server-tomcat/skaffold.yaml~gen
+              mvn -B -nsu -T0.8C -f docker/pom.xml process-resources
+              envsubst < docker/skaffold.yaml > docker/skaffold.yaml~gen
+              skaffold build -f docker/skaffold.yaml~gen
             """
           }
         }
