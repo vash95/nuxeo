@@ -61,7 +61,7 @@ public class DocumentTypeDescriptor {
     public boolean append = false;
 
     /**
-     * Allows to exclude the doctype from copy operations.
+     * Allows to exclude the doctype from copy operations for example.
      *
      * @since 11.1
      */

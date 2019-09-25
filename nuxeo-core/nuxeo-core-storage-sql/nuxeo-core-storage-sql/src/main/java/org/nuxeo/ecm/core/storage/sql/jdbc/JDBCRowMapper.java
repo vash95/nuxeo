@@ -1077,10 +1077,9 @@ public class JDBCRowMapper extends JDBCConnection implements RowMapper {
         }
 
         // recurse in children, exclude regular children (in the case of a versionable folderish)
-        boolean excludeRegularChildren = (parentId == null);
+        boolean excludeRegularChildren = parentId == null;
         for (IdWithTypes child : getChildrenIdsWithTypes(source.id, excludeRegularChildren, excludeSpecialChildren)) {
-            // don't exclude regular children when recursing
-            copyHierRecursive(child, newId, null, null, resetVersion, idMap, idToTypes, true);
+            copyHierRecursive(child, newId, null, null, resetVersion, idMap, idToTypes, excludeSpecialChildren);
         }
         return newId;
     }

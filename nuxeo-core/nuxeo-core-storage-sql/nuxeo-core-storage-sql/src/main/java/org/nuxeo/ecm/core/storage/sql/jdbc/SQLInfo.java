@@ -1042,7 +1042,7 @@ public class SQLInfo {
             if (!excludedTypes.isEmpty()) {
                 String whereAndOr = where + " AND ( " + isComplexClause + " OR "
                         + table.getColumn(Model.MAIN_PRIMARY_TYPE_KEY).getQuotedName() + " IN ('"
-                        + String.join("', '", excludedTypes) + "') )";
+                        + excludedTypes + "') )";
                 select.setWhere(whereAndOr);
             }
             selectComplexChildrenIdsAndTypesSqlIncludeSpecialChildren = select.getStatement();
