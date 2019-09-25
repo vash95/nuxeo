@@ -1550,7 +1550,7 @@ public class PersistenceContext {
         Serializable newId = res.copyId;
         markInvalidated(res.invalidations);
         // add version as a new child of its parent
-        SimpleFragment verHier = getHier(newId, excludeSpecialChildren);
+        SimpleFragment verHier = getHier(newId, false);
         verHier.put(Model.MAIN_IS_VERSION_KEY, Boolean.TRUE);
         boolean isMajor = Long.valueOf(0).equals(verHier.get(Model.MAIN_MINOR_VERSION_KEY));
 
@@ -1599,9 +1599,8 @@ public class PersistenceContext {
         Serializable versionableId = node.getId();
         Serializable versionId = version.getId();
 
-        // clear complex properties and exclude special children to avoid duplicates on restore
-        boolean excludeSpecialChildren = true;
-        List<SimpleFragment> children = getChildren(versionableId, null, excludeSpecialChildren);
+        // clear complex properties
+        List<SimpleFragment> children = getChildren(versionableId, null, true);
         // copy to avoid concurrent modifications
         for (SimpleFragment child : children.toArray(new SimpleFragment[children.size()])) {
             removePropertyNode(child);
@@ -1624,7 +1623,8 @@ public class PersistenceContext {
         overwriteRow.putNew(Model.MAIN_CHECKED_IN_KEY, Boolean.TRUE);
         overwriteRow.putNew(Model.MAIN_BASE_VERSION_KEY, versionId);
         overwriteRow.putNew(Model.MAIN_IS_VERSION_KEY, null);
-        // see excludeSpecialChildren declaration for more info
+        // exclude special children to avoid duplicates on restore
+        boolean excludeSpecialChildren = true;
         CopyResult res = mapper.copy(new IdWithTypes(version), node.getParentId(), null, overwriteRow,
                 excludeSpecialChildren);
         markInvalidated(res.invalidations);

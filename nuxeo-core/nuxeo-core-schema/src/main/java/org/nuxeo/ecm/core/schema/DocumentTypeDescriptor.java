@@ -61,9 +61,9 @@ public class DocumentTypeDescriptor {
     public boolean append = false;
 
     /**
-     * @since 11.1
-     *
      * Allows to exclude the doctype from copy operations.
+     *
+     * @since 11.1
      */
     @XNode("@isSpecial")
     public Boolean isSpecial;

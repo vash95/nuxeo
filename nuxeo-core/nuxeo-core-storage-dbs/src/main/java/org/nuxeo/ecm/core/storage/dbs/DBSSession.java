@@ -365,9 +365,9 @@ public class DBSSession implements Session<QueryFilter> {
 
     protected List<String> getAllChildrenIds(String parentId) {
         // We want all children, the filter flags are null
-        boolean specialChildrenFilter = false;
-        boolean regularChildrenFilter = false;
-        return internalGetChildrenIds(parentId, specialChildrenFilter, regularChildrenFilter);
+        boolean excludeSpecialChildren = false;
+        boolean excludeRegularChildren = false;
+        return internalGetChildrenIds(parentId, excludeSpecialChildren, excludeRegularChildren);
     }
 
     protected List<String> getChildrenIds(String parentId, boolean excludeSpecialChildren,

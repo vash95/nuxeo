@@ -201,10 +201,10 @@ public interface DBSRepository extends Repository, LockManager {
      * @param value1 the first value
      * @param key2 the second key
      * @param operator the operator to apply between key2 and value2
-     * @param value2
-     * @param ignored
-     * @return
-     * @since TODO
+     * @param value2 the second value
+     * @param ignored a set of document ids that should not be considered
+     * @return the document states matching the query
+     * @since 11.1
      */
     default List<State> queryKeyValueWithOperator(String key1, Object value1, String key2, DBSQueryOperator operator, Object value2, Set<String> ignored) {
         throw new UnsupportedOperationException();
