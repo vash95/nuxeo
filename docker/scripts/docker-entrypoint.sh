@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# Allow supporting arbitrary user id
+# Allow supporting arbitrary user ID
 if ! whoami &> /dev/null; then
   if [ -w /etc/passwd ]; then
     sed /^nuxeo/d /etc/passwd > /tmp/passwd && cp /tmp/passwd /etc/passwd

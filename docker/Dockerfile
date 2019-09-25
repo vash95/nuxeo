@@ -1,7 +1,7 @@
 # vim:set ft=dockerfile:
 
 # ------------------------------------------------------------------------
-# Build Stage: Unzip the distribution
+# Build Stage: unzip the Nuxeo distribution
 FROM alpine:3.10.2 as distrib
 
 COPY target/distrib/nuxeo-server-tomcat-*.zip /tmp/nuxeo-distribution-tomcat.zip
@@ -16,7 +16,7 @@ RUN mkdir -p /tmp/nuxeo-distribution \
 
 
 # ------------------------------------------------------------------------
-# Build Stage: Base image with Java and converters
+# Build Stage: base image with Java and converters
 FROM centos:7 as base
 
 # Add Nuxeo Jenkins X Yum repository
@@ -48,7 +48,7 @@ RUN find / -perm 6000 -type f -exec chmod a-s {} \; || true
 
 
 # ------------------------------------------------------------------------
-# Target Stage: Nuxeo image
+# Target stage: Nuxeo image
 FROM base
 LABEL maintainer="Nuxeo <packagers@nuxeo.com>"
 
@@ -79,8 +79,9 @@ RUN install-packages.sh
 RUN chown -R 1000:0 $NUXEO_HOME \
   && chmod -R g+rwX $NUXEO_HOME
 
-# Protecting writeable directories to support arbitrary User IDs for OpenShift
-# https://docs.openshift.com/container-platform/3.4/creating_images/guidelines.html
+# Set permissions on writeable directories to support arbitrary user IDs for OpenShift.
+# These directories must be owned by the root group and be read/writable by that group.
+# See https://docs.openshift.com/container-platform/3.4/creating_images/guidelines.html
 RUN chown -R 1000:0 /etc/nuxeo && chmod -R g+rwX /etc/nuxeo \
   && mkdir -p /var/lib/nuxeo/data \
   && chown -R 1000:0 /var/lib/nuxeo/data && chmod -R g+rwX /var/lib/nuxeo/data \
