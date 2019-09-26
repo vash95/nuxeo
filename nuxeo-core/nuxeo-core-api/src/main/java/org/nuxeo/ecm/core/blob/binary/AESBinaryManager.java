@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2006-2018 Nuxeo (http://nuxeo.com/) and others.
+ * (C) Copyright 2006-2014 Nuxeo SA (http://nuxeo.com/) and others.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,6 @@ import java.security.Key;
 import java.security.KeyStore;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
-import java.security.spec.AlgorithmParameterSpec;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Random;
@@ -44,13 +43,12 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
 import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.nuxeo.ecm.core.api.NuxeoException;
@@ -59,9 +57,9 @@ import org.nuxeo.runtime.api.Framework;
 /**
  * A binary manager that encrypts binaries on the filesystem using AES.
  * <p>
- * The configuration holds the keystore information to retrieve the AES key, or the password that is used to generate a
- * per-file key using PBKDF2. This configuration comes from the {@code <property name="key">...</property>} of the
- * binary manager configuration.
+ * The configuration holds the keystore information to retrieve the AES key, or the
+ * password that is used to generate a per-file key using PBKDF2. This configuration comes from the
+ * {@code <property name="key">...</property>} of the binary manager configuration.
  * <p>
  * The configuration has the form {@code key1=value1,key2=value2,...} where the possible keys are, for keystore use:
  * <ul>
@@ -85,9 +83,9 @@ import org.nuxeo.runtime.api.Framework;
  * is removed as soon as possible.
  * <p>
  * Note: if the Java Cryptographic Extension (JCE) is not configured for 256-bit key length, you may get an exception
- * "java.security.InvalidKeyException: Illegal key size or default parameters". If this is the case, go to
- * <a href="http://www.oracle.com/technetwork/java/javase/downloads/index.html" >Oracle Java SE Downloads</a> and
- * download and install the Java Cryptography Extension (JCE) Unlimited Strength Jurisdiction Policy Files for your JDK.
+ * "java.security.InvalidKeyException: Illegal key size or default parameters". If this is the case, go to <a
+ * href="http://www.oracle.com/technetwork/java/javase/downloads/index.html" >Oracle Java SE Downloads</a> and download
+ * and install the Java Cryptography Extension (JCE) Unlimited Strength Jurisdiction Policy Files for your JDK.
  *
  * @since 6.0
  */
@@ -105,10 +103,7 @@ public class AESBinaryManager extends LocalBinaryManager {
 
     protected static final String AES = "AES";
 
-    // insecure, see https://find-sec-bugs.github.io/bugs.htm#PADDING_ORACLE
     protected static final String AES_CBC_PKCS5_PADDING = "AES/CBC/PKCS5Padding";
-
-    protected static final String AES_GCM_NOPADDING = "AES/GCM/NoPadding";
 
     protected static final String PBKDF2_WITH_HMAC_SHA1 = "PBKDF2WithHmacSHA1";
 
@@ -128,14 +123,6 @@ public class AESBinaryManager extends LocalBinaryManager {
     protected static final String PARAM_KEY_ALIAS = "keyAlias";
 
     protected static final String PARAM_KEY_PASSWORD = "keyPassword";
-
-    /**
-     * If {@code true}, use the insecure AES/CBC/PKCS5Padding for encryption. The default is {@code false}, to use
-     * AES/GCM/NoPadding.
-     *
-     * @since 10.3
-     */
-    protected static final String PARAM_KEY_USE_INSECURE_CIPHER = "useInsecureCipher";
 
     // for sanity check during reads
     private static final int MAX_SALT_LEN = 1024;
@@ -162,8 +149,6 @@ public class AESBinaryManager extends LocalBinaryManager {
     protected String keyAlias;
 
     protected String keyPassword;
-
-    protected boolean useInsecureCipher;
 
     public AESBinaryManager() {
         setUnlimitedJCEPolicy();
@@ -229,9 +214,6 @@ public class AESBinaryManager extends LocalBinaryManager {
                 break;
             case PARAM_KEY_PASSWORD:
                 keyPassword = value;
-                break;
-            case PARAM_KEY_USE_INSECURE_CIPHER:
-                useInsecureCipher = Boolean.parseBoolean(value);
                 break;
             default:
                 throw new NuxeoException("Unrecognized option: " + option);
@@ -331,15 +313,13 @@ public class AESBinaryManager extends LocalBinaryManager {
         // TODO if stream source, avoid copy (no-copy optimization)
         File tmp = File.createTempFile("bin_", ".tmp", tmpDir);
         Framework.trackFile(tmp, tmp);
-        try (OutputStream out = new BufferedOutputStream(new FileOutputStream(tmp))) {
-            IOUtils.copy(in, out);
-        }
+        OutputStream out = new BufferedOutputStream(new FileOutputStream(tmp));
+        IOUtils.copy(in, out);
         in.close();
+        out.close();
         // encrypt an digest into final file
-        String digest;
-        try (InputStream nin = new BufferedInputStream(new FileInputStream(tmp))) {
-            digest = storeAndDigest(nin); // calls our storeAndDigest
-        }
+        InputStream nin = new BufferedInputStream(new FileInputStream(tmp));
+        String digest = storeAndDigest(nin); // calls our storeAndDigest
         // return a binary on our tmp file
         return new Binary(tmp, digest, blobProviderId);
     }
@@ -354,33 +334,43 @@ public class AESBinaryManager extends LocalBinaryManager {
         if (!file.exists()) {
             return null;
         }
-        File tmp;
-        try {
-            tmp = File.createTempFile("bin_", ".tmp", tmpDir);
-            Framework.trackFile(tmp, tmp);
-            try (OutputStream out = new BufferedOutputStream(new FileOutputStream(tmp));
-                    InputStream in = new BufferedInputStream(new FileInputStream(file))) {
-                decrypt(in, out);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        // return a binary on our tmp file
-        return new Binary(tmp, digest, blobProviderId);
+		
+        File tmp = null;
+			try {
+				tmp = new File(this.tmpDir+"/bin_"+digest+".tmp");
+				tmp.createNewFile();
+				Framework.trackFile(tmp, tmp);
+				OutputStream out = new BufferedOutputStream(new FileOutputStream(tmp));
+				InputStream in = new BufferedInputStream(new FileInputStream(file));
+				try {
+					decrypt(in, out);
+				} finally {
+					in.close();
+					out.close();
+				}
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+			
+			// return a binary on our tmp file
+			return new Binary(tmp, digest, blobProviderId);
+
     }
 
     @Override
     protected String storeAndDigest(InputStream in) throws IOException {
         File tmp = File.createTempFile("create_", ".tmp", tmpDir);
+        OutputStream out = new BufferedOutputStream(new FileOutputStream(tmp));
         /*
          * First, write the input stream to a temporary file, while computing a digest.
          */
         try {
             String digest;
-            try (OutputStream out = new BufferedOutputStream(new FileOutputStream(tmp))) {
+            try {
                 digest = storeAndDigest(in, out);
             } finally {
                 in.close();
+                out.close();
             }
             /*
              * Move the tmp file to its destination.
@@ -413,7 +403,7 @@ public class AESBinaryManager extends LocalBinaryManager {
      * </ul>
      *
      * @param in the input stream containing the data
-     * @param out the output stream into write
+     * @param file the file containing the encrypted data
      * @return the digest of the input stream
      */
     @Override
@@ -445,7 +435,7 @@ public class AESBinaryManager extends LocalBinaryManager {
             }
 
             // cipher
-            Cipher cipher = getCipher();
+            Cipher cipher = Cipher.getInstance(AES_CBC_PKCS5_PADDING);
             cipher.init(Cipher.ENCRYPT_MODE, secret);
 
             // write IV
@@ -518,8 +508,9 @@ public class AESBinaryManager extends LocalBinaryManager {
             data.read(iv, 0, ivLen);
 
             // cipher
-            Cipher cipher = getCipher();
-            cipher.init(Cipher.DECRYPT_MODE, secret, getParameterSpec(iv));
+            Cipher cipher;
+            cipher = Cipher.getInstance(AES_CBC_PKCS5_PADDING);
+            cipher.init(Cipher.DECRYPT_MODE, secret, new IvParameterSpec(iv));
 
             // read the encrypted data
             try (InputStream cipherIn = new CipherInputStream(in, cipher)) {
@@ -532,22 +523,6 @@ public class AESBinaryManager extends LocalBinaryManager {
             }
         } catch (GeneralSecurityException e) {
             throw new NuxeoException(e);
-        }
-    }
-
-    protected Cipher getCipher() throws GeneralSecurityException {
-        if (useInsecureCipher) {
-            return Cipher.getInstance(AES_CBC_PKCS5_PADDING); // NOSONAR
-        } else {
-            return Cipher.getInstance(AES_GCM_NOPADDING);
-        }
-    }
-
-    protected AlgorithmParameterSpec getParameterSpec(byte[] iv) {
-        if (useInsecureCipher) {
-            return new IvParameterSpec(iv);
-        } else {
-            return new GCMParameterSpec(128, iv);
         }
     }
 
